@@ -152,6 +152,26 @@ RSpec.describe "Geolocations API", type: :request do
     get "Retrieves a stored geolocation" do
       tags "Geolocations"
       produces "application/vnd.api+json"
+      parameter name: :location, in: :path, required: true,
+                description: "IP address (e.g. 8.8.8.8) or hostname (e.g. google.com)",
+                schema: { type: :string, example: "8.8.8.8" }
+      description <<~DESC
+        Retrieves a stored geolocation by IP address or hostname.
+
+        **Example requests:**
+
+        ```bash
+        # By IP
+        curl -X GET http://localhost:3000/api/v1/geolocations/8.8.8.8 \
+          -H "Authorization: Bearer YOUR_API_TOKEN" \
+          -H "Accept: application/vnd.api+json"
+
+        # By hostname
+        curl -X GET http://localhost:3000/api/v1/geolocations/google.com \
+          -H "Authorization: Bearer YOUR_API_TOKEN" \
+          -H "Accept: application/vnd.api+json"
+        ```
+      DESC
 
       response "200", "geolocation found" do
         schema geolocation_document_schema
@@ -185,6 +205,24 @@ RSpec.describe "Geolocations API", type: :request do
 
     delete "Deletes a stored geolocation" do
       tags "Geolocations"
+      parameter name: :location, in: :path, required: true,
+                description: "IP address (e.g. 8.8.8.8) or hostname (e.g. google.com)",
+                schema: { type: :string, example: "8.8.8.8" }
+      description <<~DESC
+        Deletes a stored geolocation by IP address or hostname.
+
+        **Example requests:**
+
+        ```bash
+        # By IP
+        curl -X DELETE http://localhost:3000/api/v1/geolocations/8.8.8.8 \
+          -H "Authorization: Bearer YOUR_API_TOKEN"
+
+        # By hostname
+        curl -X DELETE http://localhost:3000/api/v1/geolocations/google.com \
+          -H "Authorization: Bearer YOUR_API_TOKEN"
+        ```
+      DESC
 
       response "204", "geolocation deleted" do
         let(:location) { "8.8.8.8" }
