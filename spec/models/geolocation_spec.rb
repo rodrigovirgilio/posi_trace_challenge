@@ -15,8 +15,8 @@ RSpec.describe Geolocation, type: :model do
     end
 
     it "must be unique" do
-      create(:geolocation, ip: "8.8.8.8")
-      duplicate = build(:geolocation, ip: "8.8.8.8")
+      existing = create(:geolocation)
+      duplicate = build(:geolocation, ip: existing.ip)
 
       expect(duplicate).not_to be_valid
       expect(duplicate.errors[:ip]).to include("has already been taken")

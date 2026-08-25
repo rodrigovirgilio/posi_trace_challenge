@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "swagger_helper"
 
 RSpec.describe "Geolocations API", type: :request do
@@ -135,9 +137,9 @@ RSpec.describe "Geolocations API", type: :request do
       response "502", "geolocation provider unavailable" do
         schema error_document_schema
 
-        let(:payload) { { data: { attributes: { ip_or_url: "8.8.8.8" } } } }
+        let(:payload) { { data: { attributes: { ip_or_url: "9.9.9.9" } } } }
 
-        before { stub_ipstack("8.8.8.8", status: 500, body: "internal server error") }
+        before { stub_ipstack("9.9.9.9", status: 500, body: "internal server error") }
 
         run_test!
       end
@@ -176,12 +178,11 @@ RSpec.describe "Geolocations API", type: :request do
       response "200", "geolocation found" do
         schema geolocation_document_schema
 
-        let(:location) { "8.8.8.8" }
-
-        before { create(:geolocation, ip: "8.8.8.8") }
+        let(:geolocation) { create(:geolocation) }
+        let(:location) { geolocation.ip }
 
         run_test! do |response|
-          expect(response.parsed_body["data"]["attributes"]["ip"]).to eq("8.8.8.8")
+          expect(response.parsed_body["data"]["attributes"]["ip"]).to eq(location)
         end
       end
 
@@ -225,9 +226,8 @@ RSpec.describe "Geolocations API", type: :request do
       DESC
 
       response "204", "geolocation deleted" do
-        let(:location) { "8.8.8.8" }
-
-        before { create(:geolocation, ip: "8.8.8.8") }
+        let(:geolocation) { create(:geolocation) }
+        let(:location) { geolocation.ip }
 
         run_test!
       end

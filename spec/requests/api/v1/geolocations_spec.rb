@@ -15,9 +15,9 @@ RSpec.describe "Api::V1::Geolocations", type: :request do
     let(:headers) { jsonapi_headers.except("Authorization") }
 
     it "rejects requests without a token" do
-      create(:geolocation, ip: "8.8.8.8")
+      geolocation = create(:geolocation)
 
-      get "/api/v1/geolocations/8.8.8.8", headers: headers
+      get "/api/v1/geolocations/#{geolocation.ip}", headers: headers
 
       expect(response).to have_http_status(:unauthorized)
       expect(response.headers["WWW-Authenticate"]).to eq('Bearer realm="api"')
@@ -29,7 +29,9 @@ RSpec.describe "Api::V1::Geolocations", type: :request do
     end
 
     it "rejects requests with a wrong token" do
-      get "/api/v1/geolocations/8.8.8.8",
+      geolocation = create(:geolocation)
+
+      get "/api/v1/geolocations/#{geolocation.ip}",
           headers: headers.merge("Authorization" => "Bearer wrong-token")
 
       expect(response).to have_http_status(:unauthorized)
@@ -44,7 +46,9 @@ RSpec.describe "Api::V1::Geolocations", type: :request do
     end
 
     it "rejects DELETE requests without a token" do
-      delete "/api/v1/geolocations/8.8.8.8", headers: headers
+      geolocation = create(:geolocation)
+
+      delete "/api/v1/geolocations/#{geolocation.ip}", headers: headers
 
       expect(response).to have_http_status(:unauthorized)
     end
@@ -52,9 +56,9 @@ RSpec.describe "Api::V1::Geolocations", type: :request do
 
   describe "GET /api/v1/geolocations/:location" do
     it "returns a stored geolocation by ip" do
-      geolocation = create(:geolocation, ip: "8.8.8.8", latitude: 37.386, longitude: -122.0838)
+      geolocation = create(:geolocation, latitude: 37.386, longitude: -122.0838)
 
-      get "/api/v1/geolocations/8.8.8.8", headers: jsonapi_headers
+      get "/api/v1/geolocations/#{geolocation.ip}", headers: jsonapi_headers
 
       expect(response).to have_http_status(:ok)
       expect(response.media_type).to eq("application/vnd.api+json")
@@ -63,7 +67,7 @@ RSpec.describe "Api::V1::Geolocations", type: :request do
       expect(body["data"]["type"]).to eq("geolocation")
       expect(body["data"]["id"]).to eq(geolocation.id.to_s)
       expect(body["data"]["attributes"].symbolize_keys).to include(
-        ip: "8.8.8.8",
+        ip: geolocation.ip,
         url: nil,
         ip_type: "ipv4",
         country_name: "United States",
@@ -74,22 +78,23 @@ RSpec.describe "Api::V1::Geolocations", type: :request do
     end
 
     it "returns a stored geolocation by url" do
-      create(:geolocation, :from_url, ip: "8.8.8.8")
+      geolocation = create(:geolocation, :from_url)
 
-      get "/api/v1/geolocations/google.com", headers: jsonapi_headers
+      get "/api/v1/geolocations/#{geolocation.url}", headers: jsonapi_headers
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body["data"]["attributes"]["url"]).to eq("google.com")
+      expect(response.parsed_body["data"]["attributes"]["url"]).to eq(geolocation.url)
     end
 
     it "finds a geolocation by url through DNS resolution when only the ip is stored" do
-      create(:geolocation, ip: "8.8.8.8")
-      allow(Resolv).to receive(:getaddress).with("google.com").and_return("8.8.8.8")
+      geolocation = create(:geolocation)
+      test_url = "google.com"
+      allow(Resolv).to receive(:getaddress).with(test_url).and_return(geolocation.ip)
 
-      get "/api/v1/geolocations/google.com", headers: jsonapi_headers
+      get "/api/v1/geolocations/#{test_url}", headers: jsonapi_headers
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body["data"]["attributes"]["ip"]).to eq("8.8.8.8")
+      expect(response.parsed_body["data"]["attributes"]["ip"]).to eq(geolocation.ip)
     end
 
     it "returns 404 for an unknown ip" do
@@ -161,10 +166,10 @@ RSpec.describe "Api::V1::Geolocations", type: :request do
     end
 
     it "returns 409 when the geolocation is already stored" do
-      create(:geolocation, ip: "8.8.8.8")
+      existing = create(:geolocation, ip: "8.8.8.8")
 
       expect {
-        post_geolocation(data: { attributes: { ip_or_url: "8.8.8.8" } })
+        post_geolocation(data: { attributes: { ip_or_url: existing.ip } })
       }.not_to change(Geolocation, :count)
 
       expect(response).to have_http_status(:conflict)
@@ -172,7 +177,7 @@ RSpec.describe "Api::V1::Geolocations", type: :request do
       error = response.parsed_body["errors"].first
       expect(error["status"]).to eq("409")
       expect(error["title"]).to eq("Conflict")
-      expect(error["detail"]).to include("8.8.8.8")
+      expect(error["detail"]).to include(existing.ip)
     end
 
     it "returns 422 for invalid input" do
@@ -207,9 +212,9 @@ RSpec.describe "Api::V1::Geolocations", type: :request do
     end
 
     it "returns 502 when the provider is unavailable" do
-      stub_ipstack("8.8.8.8", status: 500, body: "internal server error")
+      stub_ipstack("9.9.9.9", status: 500, body: "internal server error")
 
-      post_geolocation(data: { attributes: { ip_or_url: "8.8.8.8" } })
+      post_geolocation(data: { attributes: { ip_or_url: "9.9.9.9" } })
 
       expect(response).to have_http_status(:bad_gateway)
 
@@ -220,9 +225,9 @@ RSpec.describe "Api::V1::Geolocations", type: :request do
 
     it "returns 422 when the provider payload fails validations" do
       body = IpstackStub::IPSTACK_SUCCESS_BODY.merge(latitude: nil).to_json
-      stub_ipstack("8.8.8.8", body: body)
+      stub_ipstack("10.10.10.10", body: body)
 
-      post_geolocation(data: { attributes: { ip_or_url: "8.8.8.8" } })
+      post_geolocation(data: { attributes: { ip_or_url: "10.10.10.10" } })
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.parsed_body["errors"].first["detail"]).to include("Latitude")
@@ -247,20 +252,20 @@ RSpec.describe "Api::V1::Geolocations", type: :request do
 
   describe "DELETE /api/v1/geolocations/:location" do
     it "deletes a stored geolocation by ip" do
-      create(:geolocation, ip: "8.8.8.8")
+      geolocation = create(:geolocation)
 
       expect {
-        delete "/api/v1/geolocations/8.8.8.8", headers: jsonapi_headers
+        delete "/api/v1/geolocations/#{geolocation.ip}", headers: jsonapi_headers
       }.to change(Geolocation, :count).by(-1)
 
       expect(response).to have_http_status(:no_content)
     end
 
     it "deletes a stored geolocation by url" do
-      create(:geolocation, :from_url, ip: "8.8.8.8")
+      geolocation = create(:geolocation, :from_url)
 
       expect {
-        delete "/api/v1/geolocations/google.com", headers: jsonapi_headers
+        delete "/api/v1/geolocations/#{geolocation.url}", headers: jsonapi_headers
       }.to change(Geolocation, :count).by(-1)
 
       expect(response).to have_http_status(:no_content)
