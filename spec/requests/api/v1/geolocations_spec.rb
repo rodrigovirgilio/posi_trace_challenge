@@ -9,29 +9,7 @@ RSpec.describe "Api::V1::Geolocations", type: :request do
     }
   end
 
-  let(:ipstack_success_body) do
-    {
-      ip: "8.8.8.8",
-      type: "ipv4",
-      continent_code: "NA",
-      continent_name: "North America",
-      country_code: "US",
-      country_name: "United States",
-      region_code: "CA",
-      region_name: "California",
-      city: "Mountain View",
-      zip: "94035",
-      latitude: 37.386,
-      longitude: -122.0838,
-      location: { geoname_id: 5_375_480, capital: "Washington D.C." }
-    }.to_json
-  end
-
-  def stub_ipstack(ip, status: 200, body:)
-    stub_request(:get, "http://api.ipstack.com/#{ip}")
-      .with(query: { access_key: "test-ipstack-access-key" })
-      .to_return(status: status, body: body)
-  end
+  let(:ipstack_success_body) { IpstackStub::IPSTACK_SUCCESS_BODY.to_json }
 
   describe "authentication" do
     let(:headers) { jsonapi_headers.except("Authorization") }
@@ -241,7 +219,7 @@ RSpec.describe "Api::V1::Geolocations", type: :request do
     end
 
     it "returns 422 when the provider payload fails validations" do
-      body = JSON.parse(ipstack_success_body).merge("latitude" => nil).to_json
+      body = IpstackStub::IPSTACK_SUCCESS_BODY.merge(latitude: nil).to_json
       stub_ipstack("8.8.8.8", body: body)
 
       post_geolocation(data: { attributes: { ip_or_url: "8.8.8.8" } })

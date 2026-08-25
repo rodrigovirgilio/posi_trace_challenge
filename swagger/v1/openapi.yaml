@@ -1,0 +1,444 @@
+---
+openapi: 3.1.0
+info:
+  title: PosiTrace Geolocation API
+  version: v1
+  description: |
+    RESTful API to register, retrieve and delete geolocation data based
+    on an IP address or URL, backed by the ipstack geolocation service.
+
+    All endpoints require a bearer token (see `API_TOKEN`) and speak
+    JSON:API (`application/vnd.api+json`) for both input and output.
+paths:
+  "/api/v1/geolocations":
+    post:
+      summary: Registers a geolocation
+      tags:
+      - Geolocations
+      description: Fetches the geolocation for an IP address or URL from the configured
+        provider and stores it in the database.
+      parameters: []
+      responses:
+        '201':
+          description: geolocation registered
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: '1'
+                      type:
+                        type: string
+                        example: geolocation
+                      attributes:
+                        type: object
+                        properties:
+                          ip:
+                            type: string
+                            example: 8.8.8.8
+                          url:
+                            type:
+                            - string
+                            - 'null'
+                            example: google.com
+                          ip_type:
+                            type:
+                            - string
+                            - 'null'
+                            example: ipv4
+                          continent_code:
+                            type:
+                            - string
+                            - 'null'
+                            example: NA
+                          continent_name:
+                            type:
+                            - string
+                            - 'null'
+                            example: North America
+                          country_code:
+                            type:
+                            - string
+                            - 'null'
+                            example: US
+                          country_name:
+                            type:
+                            - string
+                            - 'null'
+                            example: United States
+                          region_code:
+                            type:
+                            - string
+                            - 'null'
+                            example: CA
+                          region_name:
+                            type:
+                            - string
+                            - 'null'
+                            example: California
+                          city:
+                            type:
+                            - string
+                            - 'null'
+                            example: Mountain View
+                          zip:
+                            type:
+                            - string
+                            - 'null'
+                            example: '94035'
+                          latitude:
+                            type: number
+                            example: 37.386
+                          longitude:
+                            type: number
+                            example: -122.0838
+                        required:
+                        - ip
+                        - latitude
+                        - longitude
+                    required:
+                    - id
+                    - type
+                    - attributes
+                required:
+                - data
+        '400':
+          description: malformed request
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          example: '404'
+                        title:
+                          type: string
+                          example: Not Found
+                        detail:
+                          type: string
+                          example: No geolocation stored for 1.2.3.4
+                      required:
+                      - status
+                      - title
+                      - detail
+                required:
+                - errors
+        '401':
+          description: missing or invalid bearer token
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          example: '404'
+                        title:
+                          type: string
+                          example: Not Found
+                        detail:
+                          type: string
+                          example: No geolocation stored for 1.2.3.4
+                      required:
+                      - status
+                      - title
+                      - detail
+                required:
+                - errors
+        '409':
+          description: geolocation already registered
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          example: '404'
+                        title:
+                          type: string
+                          example: Not Found
+                        detail:
+                          type: string
+                          example: No geolocation stored for 1.2.3.4
+                      required:
+                      - status
+                      - title
+                      - detail
+                required:
+                - errors
+        '422':
+          description: invalid input or rejected lookup
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          example: '404'
+                        title:
+                          type: string
+                          example: Not Found
+                        detail:
+                          type: string
+                          example: No geolocation stored for 1.2.3.4
+                      required:
+                      - status
+                      - title
+                      - detail
+                required:
+                - errors
+        '502':
+          description: geolocation provider unavailable
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          example: '404'
+                        title:
+                          type: string
+                          example: Not Found
+                        detail:
+                          type: string
+                          example: No geolocation stored for 1.2.3.4
+                      required:
+                      - status
+                      - title
+                      - detail
+                required:
+                - errors
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      example: geolocations
+                    attributes:
+                      type: object
+                      properties:
+                        ip_or_url:
+                          type: string
+                          example: 8.8.8.8
+                      required:
+                      - ip_or_url
+                  required:
+                  - attributes
+              required:
+              - data
+  "/api/v1/geolocations/{location}":
+    parameters:
+    - name: location
+      in: path
+      required: true
+      description: IP address (e.g. 8.8.8.8) or hostname (e.g. google.com)
+      schema:
+        type: string
+        example: 8.8.8.8
+    get:
+      summary: Retrieves a stored geolocation
+      tags:
+      - Geolocations
+      responses:
+        '200':
+          description: geolocation found
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: '1'
+                      type:
+                        type: string
+                        example: geolocation
+                      attributes:
+                        type: object
+                        properties:
+                          ip:
+                            type: string
+                            example: 8.8.8.8
+                          url:
+                            type:
+                            - string
+                            - 'null'
+                            example: google.com
+                          ip_type:
+                            type:
+                            - string
+                            - 'null'
+                            example: ipv4
+                          continent_code:
+                            type:
+                            - string
+                            - 'null'
+                            example: NA
+                          continent_name:
+                            type:
+                            - string
+                            - 'null'
+                            example: North America
+                          country_code:
+                            type:
+                            - string
+                            - 'null'
+                            example: US
+                          country_name:
+                            type:
+                            - string
+                            - 'null'
+                            example: United States
+                          region_code:
+                            type:
+                            - string
+                            - 'null'
+                            example: CA
+                          region_name:
+                            type:
+                            - string
+                            - 'null'
+                            example: California
+                          city:
+                            type:
+                            - string
+                            - 'null'
+                            example: Mountain View
+                          zip:
+                            type:
+                            - string
+                            - 'null'
+                            example: '94035'
+                          latitude:
+                            type: number
+                            example: 37.386
+                          longitude:
+                            type: number
+                            example: -122.0838
+                        required:
+                        - ip
+                        - latitude
+                        - longitude
+                    required:
+                    - id
+                    - type
+                    - attributes
+                required:
+                - data
+        '401':
+          description: missing or invalid bearer token
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          example: '404'
+                        title:
+                          type: string
+                          example: Not Found
+                        detail:
+                          type: string
+                          example: No geolocation stored for 1.2.3.4
+                      required:
+                      - status
+                      - title
+                      - detail
+                required:
+                - errors
+        '404':
+          description: geolocation not found
+          content:
+            application/vnd.api+json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        status:
+                          type: string
+                          example: '404'
+                        title:
+                          type: string
+                          example: Not Found
+                        detail:
+                          type: string
+                          example: No geolocation stored for 1.2.3.4
+                      required:
+                      - status
+                      - title
+                      - detail
+                required:
+                - errors
+    delete:
+      summary: Deletes a stored geolocation
+      tags:
+      - Geolocations
+      responses:
+        '204':
+          description: geolocation deleted
+        '401':
+          description: missing or invalid bearer token
+        '404':
+          description: geolocation not found
+servers:
+- url: http://localhost:3000
+components:
+  securitySchemes:
+    bearer_auth:
+      type: http
+      scheme: bearer
+security:
+- bearer_auth: []
