@@ -1,7 +1,11 @@
 module Api
-  # Shared behavior for API controllers: JSON:API error rendering and the
-  # mapping from domain errors to HTTP statuses.
+  # Shared behavior for API controllers: bearer-token authentication and
+  # JSON:API error rendering mapping domain errors to HTTP statuses.
   class BaseController < ActionController::API
+    include ActionController::HttpAuthentication::Token::ControllerMethods
+
+    before_action :authenticate!
+
     rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
     rescue_from ActionController::ParameterMissing, with: :render_bad_request
     rescue_from ActionDispatch::Http::Parameters::ParseError, with: :render_bad_request
@@ -13,6 +17,15 @@ module Api
     rescue_from GeolocationProviders::UnavailableError, with: :render_bad_gateway
 
     private
+
+    def authenticate!
+      token = authenticate_with_http_token { |value, _| value }
+      return if ApiToken.valid?(token)
+
+      response.headers["WWW-Authenticate"] = 'Bearer realm="api"'
+      render_error(status: :unauthorized, title: "Unauthorized",
+                   detail: "A valid bearer token is required to access this resource")
+    end
 
     def render_not_found(exception)
       render_error(status: :not_found, title: "Not Found", detail: exception.message)

@@ -1,6 +1,7 @@
 require 'spec_helper'
 ENV['RAILS_ENV'] ||= 'test'
 ENV['IPSTACK_ACCESS_KEY'] ||= 'test-ipstack-access-key'
+ENV['API_TOKEN'] ||= 'test-api-token'
 require_relative '../config/environment'
 abort("The Rails environment is running in production mode!") if Rails.env.production?
 require 'rspec/rails'

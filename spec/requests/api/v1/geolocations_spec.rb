@@ -2,7 +2,11 @@ require "rails_helper"
 
 RSpec.describe "Api::V1::Geolocations", type: :request do
   let(:jsonapi_headers) do
-    { "Accept" => "application/vnd.api+json", "Content-Type" => "application/vnd.api+json" }
+    {
+      "Accept" => "application/vnd.api+json",
+      "Content-Type" => "application/vnd.api+json",
+      "Authorization" => "Bearer test-api-token"
+    }
   end
 
   let(:ipstack_success_body) do
@@ -27,6 +31,45 @@ RSpec.describe "Api::V1::Geolocations", type: :request do
     stub_request(:get, "http://api.ipstack.com/#{ip}")
       .with(query: { access_key: "test-ipstack-access-key" })
       .to_return(status: status, body: body)
+  end
+
+  describe "authentication" do
+    let(:headers) { jsonapi_headers.except("Authorization") }
+
+    it "rejects requests without a token" do
+      create(:geolocation, ip: "8.8.8.8")
+
+      get "/api/v1/geolocations/8.8.8.8", headers: headers
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(response.headers["WWW-Authenticate"]).to eq('Bearer realm="api"')
+      expect(response.media_type).to eq("application/vnd.api+json")
+
+      error = response.parsed_body["errors"].first
+      expect(error["status"]).to eq("401")
+      expect(error["title"]).to eq("Unauthorized")
+    end
+
+    it "rejects requests with a wrong token" do
+      get "/api/v1/geolocations/8.8.8.8",
+          headers: headers.merge("Authorization" => "Bearer wrong-token")
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it "rejects POST requests without a token" do
+      post "/api/v1/geolocations",
+           params: { data: { attributes: { ip_or_url: "8.8.8.8" } } }.to_json,
+           headers: headers
+
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    it "rejects DELETE requests without a token" do
+      delete "/api/v1/geolocations/8.8.8.8", headers: headers
+
+      expect(response).to have_http_status(:unauthorized)
+    end
   end
 
   describe "GET /api/v1/geolocations/:location" do
