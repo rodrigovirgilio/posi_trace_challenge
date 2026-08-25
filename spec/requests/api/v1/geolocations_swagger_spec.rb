@@ -16,7 +16,7 @@ RSpec.describe "Geolocations API", type: :request do
           attributes: {
             type: :object,
             properties: {
-              ip: { type: :string, example: "8.8.8.8" },
+              ip: { type: :string, example: "8.8.8.200" },
               url: { type: %i[string null], example: "google.com" },
               ip_type: { type: %i[string null], example: "ipv4" },
               continent_code: { type: %i[string null], example: "NA" },
@@ -75,7 +75,7 @@ RSpec.describe "Geolocations API", type: :request do
               attributes: {
                 type: :object,
                 properties: {
-                  ip_or_url: { type: :string, example: "8.8.8.8" }
+                  ip_or_url: { type: :string, example: "8.8.8.200" }
                 },
                 required: %w[ip_or_url]
               }
@@ -89,9 +89,9 @@ RSpec.describe "Geolocations API", type: :request do
       response "201", "geolocation registered" do
         schema geolocation_document_schema
 
-        let(:payload) { { data: { type: "geolocations", attributes: { ip_or_url: "8.8.8.8" } } } }
+        let(:payload) { { data: { type: "geolocations", attributes: { ip_or_url: "8.8.8.200" } } } }
 
-        before { stub_ipstack("8.8.8.8") }
+        before { stub_ipstack("8.8.8.200") }
 
         run_test! do |response|
           attributes = response.parsed_body["data"]["attributes"]
@@ -102,7 +102,7 @@ RSpec.describe "Geolocations API", type: :request do
       response "400", "malformed request" do
         schema error_document_schema
 
-        let(:payload) { { ip_or_url: "8.8.8.8" } }
+        let(:payload) { { ip_or_url: "8.8.8.200" } }
 
         run_test!
       end
@@ -111,7 +111,7 @@ RSpec.describe "Geolocations API", type: :request do
         schema error_document_schema
 
         let(:Authorization) { nil }
-        let(:payload) { { data: { attributes: { ip_or_url: "8.8.8.8" } } } }
+        let(:payload) { { data: { attributes: { ip_or_url: "8.8.8.200" } } } }
 
         run_test!
       end
@@ -119,9 +119,9 @@ RSpec.describe "Geolocations API", type: :request do
       response "409", "geolocation already registered" do
         schema error_document_schema
 
-        let(:payload) { { data: { attributes: { ip_or_url: "8.8.8.8" } } } }
+        let(:payload) { { data: { attributes: { ip_or_url: "8.8.8.201" } } } }
 
-        before { create(:geolocation, ip: "8.8.8.8") }
+        before { create(:geolocation, ip: "8.8.8.201") }
 
         run_test!
       end
@@ -148,15 +148,15 @@ RSpec.describe "Geolocations API", type: :request do
 
   path "/api/v1/geolocations/{location}" do
     parameter name: :location, in: :path, required: true,
-              description: "IP address (e.g. 8.8.8.8) or hostname (e.g. google.com)",
-              schema: { type: :string, example: "8.8.8.8" }
+              description: "IP address (e.g. 8.8.8.200) or hostname (e.g. google.com)",
+              schema: { type: :string, example: "8.8.8.200" }
 
     get "Retrieves a stored geolocation" do
       tags "Geolocations"
       produces "application/vnd.api+json"
       parameter name: :location, in: :path, required: true,
-                description: "IP address (e.g. 8.8.8.8) or hostname (e.g. google.com)",
-                schema: { type: :string, example: "8.8.8.8" }
+                description: "IP address (e.g. 8.8.8.200) or hostname (e.g. google.com)",
+                schema: { type: :string, example: "8.8.8.200" }
       description <<~DESC
         Retrieves a stored geolocation by IP address or hostname.
 
@@ -164,7 +164,7 @@ RSpec.describe "Geolocations API", type: :request do
 
         ```bash
         # By IP
-        curl -X GET http://localhost:3000/api/v1/geolocations/8.8.8.8 \
+        curl -X GET http://localhost:3000/api/v1/geolocations/8.8.8.200 \
           -H "Authorization: Bearer YOUR_API_TOKEN" \
           -H "Accept: application/vnd.api+json"
 
@@ -190,7 +190,7 @@ RSpec.describe "Geolocations API", type: :request do
         schema error_document_schema
 
         let(:Authorization) { nil }
-        let(:location) { "8.8.8.8" }
+        let(:location) { "8.8.8.200" }
 
         run_test!
       end
@@ -207,8 +207,8 @@ RSpec.describe "Geolocations API", type: :request do
     delete "Deletes a stored geolocation" do
       tags "Geolocations"
       parameter name: :location, in: :path, required: true,
-                description: "IP address (e.g. 8.8.8.8) or hostname (e.g. google.com)",
-                schema: { type: :string, example: "8.8.8.8" }
+                description: "IP address (e.g. 8.8.8.200) or hostname (e.g. google.com)",
+                schema: { type: :string, example: "8.8.8.200" }
       description <<~DESC
         Deletes a stored geolocation by IP address or hostname.
 
@@ -216,7 +216,7 @@ RSpec.describe "Geolocations API", type: :request do
 
         ```bash
         # By IP
-        curl -X DELETE http://localhost:3000/api/v1/geolocations/8.8.8.8 \
+        curl -X DELETE http://localhost:3000/api/v1/geolocations/8.8.8.200 \
           -H "Authorization: Bearer YOUR_API_TOKEN"
 
         # By hostname
@@ -236,7 +236,7 @@ RSpec.describe "Geolocations API", type: :request do
         schema error_document_schema
 
         let(:Authorization) { nil }
-        let(:location) { "8.8.8.8" }
+        let(:location) { "8.8.8.200" }
 
         run_test!
       end

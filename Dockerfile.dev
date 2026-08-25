@@ -8,6 +8,7 @@ RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
     curl \
     firefox-esr \
     wget \
+    libvips \
     && rm -rf /var/lib/apt/lists/*
 
 # Install geckodriver for Firefox

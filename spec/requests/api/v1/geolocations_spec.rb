@@ -39,7 +39,7 @@ RSpec.describe "Api::V1::Geolocations", type: :request do
 
     it "rejects POST requests without a token" do
       post "/api/v1/geolocations",
-           params: { data: { attributes: { ip_or_url: "8.8.8.8" } } }.to_json,
+           params: { data: { attributes: { ip_or_url: "8.8.8.100" } } }.to_json,
            headers: headers
 
       expect(response).to have_http_status(:unauthorized)
@@ -135,28 +135,28 @@ RSpec.describe "Api::V1::Geolocations", type: :request do
     end
 
     it "fetches and stores the geolocation for an ip" do
-      stub_ipstack("8.8.8.8", body: ipstack_success_body)
+      stub_ipstack("8.8.8.100", body: ipstack_success_body)
 
       expect {
-        post_geolocation(data: { type: "geolocations", attributes: { ip_or_url: "8.8.8.8" } })
+        post_geolocation(data: { type: "geolocations", attributes: { ip_or_url: "8.8.8.100" } })
       }.to change(Geolocation, :count).by(1)
 
       expect(response).to have_http_status(:created)
       expect(response.media_type).to eq("application/vnd.api+json")
 
       attributes = response.parsed_body["data"]["attributes"]
-      expect(attributes["ip"]).to eq("8.8.8.8")
+      expect(attributes["ip"]).to eq("8.8.8.100")
       expect(attributes["country_name"]).to eq("United States")
       expect(attributes["latitude"]).to eq(37.386)
       expect(attributes["longitude"]).to eq(-122.0838)
 
       expect(Geolocation.last.attributes.symbolize_keys)
-        .to include(ip: "8.8.8.8", url: nil, country_name: "United States")
+        .to include(ip: "8.8.8.100", url: nil, country_name: "United States")
     end
 
     it "fetches and stores the geolocation for a url" do
-      allow(Resolv).to receive(:getaddress).with("google.com").and_return("8.8.8.8")
-      stub_ipstack("8.8.8.8", body: ipstack_success_body)
+      allow(Resolv).to receive(:getaddress).with("google.com").and_return("8.8.8.101")
+      stub_ipstack("8.8.8.101", body: ipstack_success_body)
 
       post_geolocation(data: { attributes: { ip_or_url: "https://google.com/search?q=x" } })
 
@@ -166,7 +166,7 @@ RSpec.describe "Api::V1::Geolocations", type: :request do
     end
 
     it "returns 409 when the geolocation is already stored" do
-      existing = create(:geolocation, ip: "8.8.8.8")
+      existing = create(:geolocation, ip: "8.8.8.102")
 
       expect {
         post_geolocation(data: { attributes: { ip_or_url: existing.ip } })
