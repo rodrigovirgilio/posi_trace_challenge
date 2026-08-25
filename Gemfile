@@ -15,6 +15,11 @@ gem "turbo-rails"
 # Hotwire's modest JavaScript framework [https://stimulus.hotwired.dev]
 gem "stimulus-rails"
 
+# HTTP client for the geolocation provider integration [https://lostisland.github.io/faraday/]
+gem "faraday"
+# JSON:API serialization [https://github.com/jsonapi-serializer/jsonapi-serializer]
+gem "jsonapi-serializer"
+
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
 
@@ -53,4 +58,9 @@ group :development, :test do
   gem 'rspec-rails', '~> 8.0.4'
   gem 'factory_bot_rails'
   gem 'faker'
+end
+
+group :test do
+  # Stub HTTP requests to the geolocation provider in specs [https://github.com/bblimke/webmock]
+  gem "webmock"
 end
