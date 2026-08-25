@@ -224,8 +224,31 @@ curl -X DELETE -H "Authorization: Bearer posi-trace-dev-token" \
 
 ## Running tests
 
+### Unit / Request specs (fast, headless)
+
 ```bash
 # Inside the web container (sets test env vars automatically)
+docker compose exec -e RAILS_ENV=test web bundle exec rspec
+```
+
+Runs 82 examples: unit specs, request specs, rswag specs.
+
+### System specs (browser-based, with Firefox/Selenium)
+
+```bash
+# Inside the web container
+docker compose exec -e RAILS_ENV=test web bundle exec rspec spec/system/
+```
+
+Runs 2 system specs that launch **headless Firefox** via Selenium to verify:
+- Swagger UI loads at `/api-docs`
+- API endpoints are listed in the Swagger UI
+
+> **Note:** System specs require Firefox + geckodriver (installed in the Docker image). They run headless by default. Screenshots on failure are saved to `tmp/capybara/`.
+
+### All tests (84 examples)
+
+```bash
 docker compose exec -e RAILS_ENV=test web bundle exec rspec
 ```
 
@@ -236,6 +259,7 @@ The test suite covers:
 - All API endpoints (200, 201, 204, 400, 401, 404, 409, 422, 502)
 - Bearer token authentication
 - Swagger/OpenAPI document generation (rswag)
+- Swagger UI rendering in real browser (system specs)
 
 ## Swapping the geolocation provider
 
@@ -278,6 +302,11 @@ spec/
 │   ├── geolocations_spec.rb            # hand-written request specs
 │   └── geolocations_swagger_spec.rb    # rswag specs → openapi.yaml
 ├── services/                           # unit specs for each service
+├── support/
+│   ├── capybara.rb                     # Capybara + Selenium (Firefox) config
+│   └── ipstack_stub.rb                 # shared WebMock stubs
+├── system/
+│   └── geolocations_spec.rb            # system specs (headless Firefox)
 └── swagger_helper.rb                   # rswag config (OpenAPI 3.1 + bearer auth)
 ```
 

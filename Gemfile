@@ -71,7 +71,7 @@ group :test do
   # Stub HTTP requests to the geolocation provider in specs [https://github.com/bblimke/webmock]
   gem "webmock"
 
-  # System tests
+  # System tests [https://github.com/teamcapybara/capybara]
   gem "capybara"
   gem "capybara-screenshot"
   gem "selenium-webdriver"

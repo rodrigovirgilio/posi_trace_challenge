@@ -6,7 +6,16 @@ RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
     libpq-dev \
     git \
     curl \
+    firefox-esr \
+    wget \
     && rm -rf /var/lib/apt/lists/*
+
+# Install geckodriver for Firefox
+RUN GECKODRIVER_VERSION=$(wget -qO- "https://api.github.com/repos/mozilla/geckodriver/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/') && \
+    wget -q "https://github.com/mozilla/geckodriver/releases/download/v${GECKODRIVER_VERSION}/geckodriver-v${GECKODRIVER_VERSION}-linux-aarch64.tar.gz" && \
+    tar -xzf "geckodriver-v${GECKODRIVER_VERSION}-linux-aarch64.tar.gz" -C /usr/local/bin && \
+    rm "geckodriver-v${GECKODRIVER_VERSION}-linux-aarch64.tar.gz" && \
+    chmod +x /usr/local/bin/geckodriver
 
 # Install Node.js and Yarn
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
