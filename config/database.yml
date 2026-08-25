@@ -1,0 +1,26 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+
+development:
+  <<: *default
+  database: posi_trace_challenge_development
+  username: postgres
+  password: password
+  host: db
+  port: 5432
+
+test:
+  <<: *default
+  database: posi_trace_challenge_test
+  username: postgres
+  password: password
+  host: db
+  port: 5432
+
+production:
+  <<: *default
+  database: posi_trace_challenge_production
+  username: posi_trace_challenge
+  password: <%= ENV["posi_trace_challenge_DATABASE_PASSWORD"] %>
