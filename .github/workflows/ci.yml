@@ -87,6 +87,7 @@ jobs:
       RAILS_ENV: test
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/posi_trace_challenge_test
       API_TOKEN: test-api-token
+      IPSTACK_ACCESS_KEY: test-ipstack-access-key
 
     steps:
       - name: Checkout code
