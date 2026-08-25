@@ -11,4 +11,12 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
+
+  namespace :api do
+    namespace :v1 do
+      # :location accepts IPs and hostnames (dots included)
+      resources :geolocations, only: %i[show create destroy], param: :location,
+                               constraints: { location: %r{[^/]+} }
+    end
+  end
 end

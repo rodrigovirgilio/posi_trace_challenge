@@ -19,6 +19,11 @@ gem "stimulus-rails"
 gem "faraday"
 # JSON:API serialization [https://github.com/jsonapi-serializer/jsonapi-serializer]
 gem "jsonapi-serializer"
+# Swagger/OpenAPI documentation [https://github.com/rswag/rswag]
+gem "rswag-api"
+gem "rswag-ui"
+# Required by rswag-ui; no longer a default gem since Ruby 4.0
+gem "ostruct"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
@@ -54,13 +59,25 @@ group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
 end
+
 group :development, :test do
-  gem 'rspec-rails', '~> 8.0.4'
-  gem 'factory_bot_rails'
-  gem 'faker'
+  gem "rspec-rails", "~> 8.0.4"
+  gem "factory_bot_rails"
+  gem "faker"
+  gem "rswag-specs"
 end
 
 group :test do
   # Stub HTTP requests to the geolocation provider in specs [https://github.com/bblimke/webmock]
   gem "webmock"
+
+  # System tests
+  gem "capybara"
+  gem "capybara-screenshot"
+  gem "selenium-webdriver"
+end
+
+group :development do
+  # CORS for Swagger UI in development
+  gem "rack-cors"
 end
