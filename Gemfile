@@ -50,7 +50,7 @@ group :development do
   gem "web-console"
 end
 group :development, :test do
-  gem 'rspec-rails', '~> 7.1.0'
+  gem 'rspec-rails', '~> 8.0.4'
   gem 'factory_bot_rails'
   gem 'faker'
 end
