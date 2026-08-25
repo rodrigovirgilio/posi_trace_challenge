@@ -17,27 +17,109 @@ The provider integration is swappable — add a new adapter to `GeolocationProvi
 
 ## Quick start (Docker)
 
+### 1. Clone & configure environment
+
 ```bash
-# 1. Clone & start services
-docker compose up -d --build
+# Clone the repository
+git clone https://github.com/rodrigovirgilio/posi_trace_challenge.git
+cd posi_trace_challenge
 
-# 2. Prepare the database (creates DB, runs migrations, loads seeds)
-docker compose exec web bin/rails db:prepare db:seed
+# Copy the sample environment file
+cp .env.sample .env
 
-# 3. The API is now available at http://localhost:3000
-#    Swagger UI: http://localhost:3000/api-docs
+# Edit .env and set your credentials (see "Environment variables" below)
+# At minimum, set a strong API_TOKEN for production use.
+# For local development the defaults work out of the box.
 ```
 
-The default development token is `posi-trace-dev-token` (see `API_TOKEN` below).
+### 2. Obtain an ipstack API key (required for live lookups)
+
+1. Sign up for a free account at **https://ipstack.com/signup/free** (1,000 requests/month)
+2. After confirming your email, copy **Your API Access Key** from the dashboard
+3. Paste it into `.env` as `IPSTACK_ACCESS_KEY=your_key_here`
+
+> **Note:** The free plan only works over **HTTP** (not HTTPS). The application already uses `http://api.ipstack.com`.
+> Without this key, `POST /geolocations` returns `502 Bad Gateway` with `"IPSTACK_ACCESS_KEY is not configured"`.
+
+### 3. Start the application
+
+```bash
+# Build and start containers (PostgreSQL + Rails)
+docker compose up -d --build
+
+# Prepare the database (creates DB, runs migrations, loads seed data)
+docker compose exec web bin/rails db:prepare db:seed
+```
+
+### 4. Verify it works
+
+- **API base:** http://localhost:3000
+- **Swagger UI:** http://localhost:3000/api-docs
+
+#### Test via Swagger UI
+
+1. Open http://localhost:3000/api-docs
+2. Click **Authorize** (🔒 top-right)
+3. In the `bearer_auth` field, enter: `Bearer YOUR_API_TOKEN`
+   - For local dev with defaults: `Bearer posi-trace-dev-token`
+   - Or use the value you set in `.env` for `API_TOKEN`
+4. Click **Authorize** → **Close**
+5. Expand any endpoint (e.g., `POST /api/v1/geolocations`), click **Try it out**, provide a payload, and **Execute**
+
+#### Test via curl
+
+```bash
+# Register a geolocation (by IP)
+curl -X POST http://localhost:3000/api/v1/geolocations \
+  -H "Authorization: Bearer posi-trace-dev-token" \
+  -H "Content-Type: application/vnd.api+json" \
+  -H "Accept: application/vnd.api+json" \
+  -d '{"data":{"type":"geolocations","attributes":{"ip_or_url":"8.8.8.8"}}}'
+
+# Retrieve by IP
+curl -H "Authorization: Bearer posi-trace-dev-token" \
+     -H "Accept: application/vnd.api+json" \
+     http://localhost:3000/api/v1/geolocations/8.8.8.8
+
+# Retrieve by hostname (falls back to DNS → IP if not found by url)
+curl -H "Authorization: Bearer posi-trace-dev-token" \
+     -H "Accept: application/vnd.api+json" \
+     http://localhost:3000/api/v1/geolocations/google.com
+
+# Delete
+curl -X DELETE -H "Authorization: Bearer posi-trace-dev-token" \
+     http://localhost:3000/api/v1/geolocations/8.8.8.8
+```
 
 ## Environment variables
 
+Create a `.env` file from the sample:
+
+```bash
+cp .env.sample .env
+```
+
 | Variable | Required? | Default | Description |
 |---|---|---|---|
-| `API_TOKEN` | **yes** | `posi-trace-dev-token` (dev) | Bearer token required on every request. Set a strong secret in production. |
+| `API_TOKEN` | **yes** | `posi-trace-dev-token` (dev) | Bearer token required on every request. **Set a strong secret in production.** |
 | `IPSTACK_ACCESS_KEY` | for live lookups | — | Free key from [ipstack.com](https://ipstack.com). Only needed for `POST /api/v1/geolocations`. |
 | `GEOLOCATION_PROVIDER` | no | `ipstack` | Switch the geolocation provider by registering a new adapter. |
 | `DATABASE_URL` | no | from `config/database.yml` | Override the database connection (used in CI). |
+
+### Example `.env`
+
+```dotenv
+# Required: bearer token for API authentication
+# Generate a strong one for production: openssl rand -hex 32
+API_TOKEN=posi-trace-dev-token
+
+# Optional: get a free key at https://ipstack.com/signup/free
+# Only needed for POST /geolocations (live provider calls)
+IPSTACK_ACCESS_KEY=
+
+# Optional: switch provider (ipstack is the only built-in)
+GEOLOCATION_PROVIDER=ipstack
+```
 
 ## API reference
 
@@ -143,7 +225,7 @@ curl -X DELETE -H "Authorization: Bearer posi-trace-dev-token" \
 ## Running tests
 
 ```bash
-# Inside the web container
+# Inside the web container (sets test env vars automatically)
 docker compose exec -e RAILS_ENV=test web bundle exec rspec
 ```
 
