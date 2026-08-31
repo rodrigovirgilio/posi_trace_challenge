@@ -38,5 +38,10 @@ module PosiTraceChallenge
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+
+    # Geolocation provider configuration. Swap providers by adding an adapter
+    # to GeolocationProviders and pointing GEOLOCATION_PROVIDER at it.
+    config.x.geolocation.provider = ENV.fetch("GEOLOCATION_PROVIDER", "ipstack")
+    config.x.geolocation.ipstack_access_key = ENV["IPSTACK_ACCESS_KEY"]
   end
 end

@@ -30,6 +30,10 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:password@db:5432/posi_trace_challenge_development
       RAILS_ENV: development
+      # Bearer token required by the API (override in your shell for real use)
+      API_TOKEN: ${API_TOKEN:-posi-trace-dev-token}
+      # Free key from https://ipstack.com/ — required only for POST (live lookups)
+      IPSTACK_ACCESS_KEY: ${IPSTACK_ACCESS_KEY:-}
     depends_on:
       db:
         condition: service_healthy
